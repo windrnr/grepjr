@@ -80,13 +80,27 @@ char *readContent(const char *path) {
 }
 
 void search(char *query, char *content) {
-        char *line = strtok((char*)content, "\n");
-        while (line != NULL) {
-                if (strstr(line, query) != NULL) 
-                        printf("%s\n", line);
+    char *line = strtok((char*)content, "\n");
+    while (line != NULL) {
+        char *substringPosition = line;
+        while ((substringPosition = strstr(substringPosition, query)) != NULL) {
+            /* char *substringPosition = strstr(line, query); */
+            /* if (substringPosition != NULL) { */ 
+            int startPosition = substringPosition - line;
+            int endPosition = startPosition + strlen(query);
 
-                line = strtok(NULL, "\n");
+            char *substring = (char *)malloc(strlen(query) + 1);
+            strncpy(substring, line + startPosition, endPosition - startPosition);
+            substring[endPosition - startPosition] = '\0';
+
+            printf("%.*s", startPosition, line);
+            printf("\e[1m\x1b[%dm%s\x1b[0m\e[m", 33, substring);
+            printf("%s\n", line + endPosition);
+            /* } */
+            substringPosition++;
         }
+        line = strtok(NULL, "\n");
+    }
 }
 
 void Run(const Config *config) {
