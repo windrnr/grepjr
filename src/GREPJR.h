@@ -96,7 +96,7 @@ void search(char *query, char *content) {
             printf("%.*s", startPosition, line);
             printf("\e[1m\x1b[%dm%s\x1b[0m\e[m", 33, substring);
             printf("%s\n", line + endPosition);
-            /* } */
+            free(substring);
             substringPosition++;
         }
         line = strtok(NULL, "\n");
