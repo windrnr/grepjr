@@ -1,12 +1,13 @@
 #ifndef GREPJR_H_
 #define GREPJR_H_
+#define SIZE 256
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
 typedef struct {
-        char filepath[100];
-        char query[100];
+        char filepath[SIZE];
+        char query[SIZE];
 } Config;
 
 typedef enum {
@@ -17,7 +18,7 @@ typedef enum {
 ErrorCode Build(const int argc, char *argv[], Config *config);
 void Run(const Config *config);
 char *readContent(const char *path);
-void search(char *query, char *content);
+void search(const char *query, char *content);
 
 #endif // GREPJR_H_
 
@@ -55,7 +56,7 @@ char *readContent(const char *path) {
         }
 
         fseek(file, 0, SEEK_END);
-        long file_size = ftell(file);
+        size_t file_size = ftell(file);
         rewind(file);
 
         char *content = (char *)malloc(file_size + 1);
@@ -79,13 +80,11 @@ char *readContent(const char *path) {
         return content;
 }
 
-void search(char *query, char *content) {
+void search(const char *query, char *content) {
     char *line = strtok((char*)content, "\n");
     while (line != NULL) {
         char *substringPosition = line;
         while ((substringPosition = strstr(substringPosition, query)) != NULL) {
-            /* char *substringPosition = strstr(line, query); */
-            /* if (substringPosition != NULL) { */ 
             int startPosition = substringPosition - line;
             int endPosition = startPosition + strlen(query);
 
@@ -94,7 +93,7 @@ void search(char *query, char *content) {
             substring[endPosition - startPosition] = '\0';
 
             printf("%.*s", startPosition, line);
-            printf("\e[1m\x1b[%dm%s\x1b[0m\e[m", 33, substring);
+            printf("\033 [1m\x1b[%dm%s\x1b[0m \033[m", 33, substring);
             printf("%s\n", line + endPosition);
             free(substring);
             substringPosition++;
@@ -104,8 +103,8 @@ void search(char *query, char *content) {
 }
 
 void Run(const Config *config) {
-        char *content = readContent(&config->filepath);
-        search(&config->query, content);
+        char *content = readContent(config->filepath);
+        search(config->query, content);
         free(content);
 }
 #endif //GREPJR_IMPLEMENTATION
