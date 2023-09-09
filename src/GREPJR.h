@@ -82,6 +82,7 @@ char *readContent(const char *path) {
 
 void search(const char *query, char *content) {
     char *line = strtok((char*)content, "\n");
+    int line_num = 1;
     while (line != NULL) {
         char *substringPosition = line;
         while ((substringPosition = strstr(substringPosition, query)) != NULL) {
@@ -92,12 +93,14 @@ void search(const char *query, char *content) {
             strncpy(substring, line + startPosition, endPosition - startPosition);
             substring[endPosition - startPosition] = '\0';
 
-            printf("%.*s", startPosition, line);
+            printf("\x1b[%dm%d\x1b[0m: %.*s", 32, line_num, startPosition, line);
             printf("\033 [1m\x1b[%dm%s\x1b[0m \033[m", 33, substring);
             printf("%s\n", line + endPosition);
             free(substring);
             substringPosition++;
+            // RECURSIVELY?
         }
+        line_num += 1;
         line = strtok(NULL, "\n");
     }
 }
