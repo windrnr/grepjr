@@ -1,9 +1,12 @@
 #ifndef GREPJR_H_
 #define GREPJR_H_
-#define SIZE 256
+#define SIZE        256
+#define COLOR_RED   33
+#define COLOR_GREEN 32
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 typedef struct {
         char filepath[SIZE];
@@ -16,9 +19,9 @@ typedef enum {
 } ErrorCode;
 
 ErrorCode Build(const int argc, char *argv[], Config *config);
-void Run(const Config *config);
 char *readContent(const char *path);
 void search(const char *query, char *content);
+void Run(const Config *config);
 
 #endif // GREPJR_H_
 
@@ -51,8 +54,8 @@ ErrorCode Build(const int argc, char *argv[], Config *config) {
 char *readContent(const char *path) {
         FILE *file = fopen(path, "r");
         if (file == NULL) {
-                fprintf(stderr, "Error opening '%s' file. Aborting.\n", path);
-                exit(1);
+                fprintf(stderr, "[%s] Error opening '%s' file: %s.\n", __func__, path, strerror(errno));
+                exit(EXIT_FAILURE);
         }
 
         fseek(file, 0, SEEK_END);
@@ -63,8 +66,8 @@ char *readContent(const char *path) {
 
         if (content == NULL) {
                 fclose(file);
-                fprintf(stderr, "Error allocating memory for storing the content of the file. Aborting\n");
-                exit(1);
+                fprintf(stderr, "[%s] Error allocating memory for storing the content of the file: %s.\n", __func__, strerror(errno));
+                exit(EXIT_FAILURE);
         }
 
         size_t bytes_read = fread(content, 1, file_size, file);
@@ -73,36 +76,40 @@ char *readContent(const char *path) {
         if (bytes_read != file_size) {
                 free(content);
                 fclose(file);
-                fprintf(stderr, "Error reading the file. Aborting");
-                exit(1);
+                fprintf(stderr, "[%s] Error reading the file: %s.\n", __func__, strerror(errno));
+                exit(EXIT_FAILURE);
         }
         fclose(file);
         return content;
 }
 
 void search(const char *query, char *content) {
-    char *line = strtok((char*)content, "\n");
-    int line_num = 1;
-    while (line != NULL) {
-        char *substringPosition = line;
-        while ((substringPosition = strstr(substringPosition, query)) != NULL) {
-            int startPosition = substringPosition - line;
-            int endPosition = startPosition + strlen(query);
+        char *line_ptr = strtok((char*)content, "\n");
+        int line_num = 1;
+        while (line_ptr != NULL) {
+                char *sub_str_pointer = strstr(line_ptr, query);
+                if (sub_str_pointer != NULL) {
+                        printf("\x1b[%dm%d\x1b[0m: ", COLOR_GREEN, line_num);
+                        while (sub_str_pointer != NULL) {
+                            size_t startPosition = sub_str_pointer - line_ptr;
 
-            char *substring = (char *)malloc(strlen(query) + 1);
-            strncpy(substring, line + startPosition, endPosition - startPosition);
-            substring[endPosition - startPosition] = '\0';
+                            for (size_t i = 0; i < startPosition; i++) {
+                                printf("%c", line_ptr[i]);
+                            }
+                            printf("\033[1m\x1b[%dm", COLOR_RED);
+                            for (size_t i = 0; i < strlen(query); i++){
+                                printf("%c", line_ptr[startPosition + i]);
+                            }
+                            printf("\x1b[0m\033[m");
 
-            printf("\x1b[%dm%d\x1b[0m: %.*s", 32, line_num, startPosition, line);
-            printf("\033 [1m\x1b[%dm%s\x1b[0m \033[m", 33, substring);
-            printf("%s\n", line + endPosition);
-            free(substring);
-            substringPosition++;
-            // RECURSIVELY?
+                            line_ptr = sub_str_pointer + strlen(query);
+                            sub_str_pointer = strstr(line_ptr, query);
+                    }
+                    printf("%s\n", line_ptr);
+                }
+                line_num += 1;
+                line_ptr = strtok(NULL, "\n");
         }
-        line_num += 1;
-        line = strtok(NULL, "\n");
-    }
 }
 
 void Run(const Config *config) {
