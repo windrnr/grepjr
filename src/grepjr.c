@@ -6,7 +6,7 @@ int main(int argc, char *argv[]) {
         Config config;
         ErrorCode result = Build(argc, argv, &config);
         if (result == ParseErr) {
-                fprintf(stderr, "[%s] A parse error has ocurred: %s.\n", __func__, strerror(errno));
+                fprintf(stderr, "[%s] A parse error has ocurred.\n", __func__);
                 exit(EXIT_FAILURE);
         }
         Run(&config);
