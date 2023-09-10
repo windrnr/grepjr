@@ -111,7 +111,6 @@ void search(const char *query, char *content) {
                 line_ptr = strtok(NULL, "\n");
         }
 }
-
 void Run(const Config *config) {
         char *content = readContent(config->filepath);
         search(config->query, content);
