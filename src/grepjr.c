@@ -2,7 +2,7 @@
 #define GREPJR_IMPLEMENTATION
 #include "GREPJR.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char **argv) {
         Config config;
         ErrorCode result = Build(argc, argv, &config);
         if (result == ParseErr) {
