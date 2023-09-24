@@ -85,8 +85,9 @@ char *readContent(const char *path) {
 
 void search(const char *query, char *content) {
         char *line_ptr = strtok((char*)content, "\n");
-        int line_num = 1;
-        while (line_ptr != NULL) {
+        for (int line_num = 1;line_ptr != NULL;
+             line_num++, line_ptr = strtok(NULL,"\n")) {
+             
                 char *sub_str_pointer = strstr(line_ptr, query);
                 if (sub_str_pointer != NULL) {
                         printf("\x1b[%dm%d\x1b[0m: ", COLOR_GREEN, line_num);
@@ -107,10 +108,9 @@ void search(const char *query, char *content) {
                     }
                     printf("%s\n", line_ptr);
                 }
-                line_num += 1;
-                line_ptr = strtok(NULL, "\n");
         }
 }
+
 void Run(const Config *config) {
         char *content = readContent(config->filepath);
         search(config->query, content);
