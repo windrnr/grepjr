@@ -1,12 +1,18 @@
 #ifndef GREPJR_H_
 #define GREPJR_H_
 #define SIZE        256
-#define COLOR_RED   33
+#define COLOR_YELLOW 33
 #define COLOR_GREEN 32
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+
+/* #ifdef _WIN32 */
+/* #include <windows.h> */
+/* #endif */
+
+
 
 typedef struct {
         char filepath[SIZE];
@@ -83,6 +89,18 @@ char *readContent(const char *path) {
         return content;
 }
 
+void print_text(const char *query, char* line_ptr, size_t startPosition) {
+        for (size_t i = 0; i < startPosition; i++) {
+            printf("%c", line_ptr[i]);
+        }
+        printf("\033[1m\x1b[%dm", COLOR_YELLOW);
+        for (size_t i = 0; i < strlen(query); i++){
+            printf("%c", line_ptr[startPosition + i]);
+        }
+        printf("\x1b[0m\033[m");
+}
+
+
 void search(const char *query, char *content) {
         char *line_ptr = strtok((char*)content, "\n");
         for (int line_num = 1;line_ptr != NULL;
@@ -93,19 +111,12 @@ void search(const char *query, char *content) {
                         printf("\x1b[%dm%d\x1b[0m: ", COLOR_GREEN, line_num);
                         while (sub_str_pointer != NULL) {
                             size_t startPosition = sub_str_pointer - line_ptr;
-
-                            for (size_t i = 0; i < startPosition; i++) {
-                                printf("%c", line_ptr[i]);
-                            }
-                            printf("\033[1m\x1b[%dm", COLOR_RED);
-                            for (size_t i = 0; i < strlen(query); i++){
-                                printf("%c", line_ptr[startPosition + i]);
-                            }
-                            printf("\x1b[0m\033[m");
+                            
+                            print_text(query, line_ptr, startPosition);
 
                             line_ptr = sub_str_pointer + strlen(query);
                             sub_str_pointer = strstr(line_ptr, query);
-                    }
+                        }
                     printf("%s\n", line_ptr);
                 }
         }
