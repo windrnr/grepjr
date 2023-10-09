@@ -1,5 +1,6 @@
 #ifndef GREPJR_H_
 #define GREPJR_H_
+#include <stdint.h>
 #define SIZE        256
 #define COLOR_YELLOW 33
 #define COLOR_GREEN 32
@@ -8,45 +9,46 @@
 #include <stdlib.h>
 #include <errno.h>
 
-/* #ifdef _WIN32 */
-/* #include <windows.h> */
-/* #endif */
+typedef char byte;
+typedef int32_t i32;
+typedef size_t usize;
 
+struct Config {
+        byte filepath[SIZE];
+        byte query[SIZE];
+};
+typedef struct Config Config;
 
+struct FileBuild{
+        i32 ok;
+};
+typedef struct FileBuild FileBuild;
 
-typedef struct {
-        char filepath[SIZE];
-        char query[SIZE];
-} Config;
-
-typedef enum {
-        Ok,
-        ParseErr,
-} ErrorCode;
-
-ErrorCode Build(const int argc, char *argv[], Config *config);
-char *readContent(const char *path);
-void search(const char *query, char *content);
-void Run(const Config *config);
+static FileBuild Build(i32 argc, byte *argv[], Config *config);
+static byte *readContent(byte *path);
+static void search(byte *query, byte *content);
+static void Run(Config *config);
 
 #endif // GREPJR_H_
 
 #ifdef GREPJR_IMPLEMENTATION 
 
-ErrorCode Build(const int argc, char *argv[], Config *config) {
+static FileBuild Build(i32 argc, byte *argv[], Config *config) {
+        FileBuild r = {0};
+
         if (argc != 3) {
                 fprintf(stderr, "Usage is '%s' <query> <filename>.\n", argv[0]);
-                return ParseErr;
+                return r;
         }
 
         if (*argv [1] == '\0') {
                 fprintf(stderr, "A query has not been stated.\n");
-                return ParseErr;
+                return r;
         }
 
         if (*argv [2] == '\0') {
                 fprintf(stderr, "A filepath has not been stated.\n");
-                return ParseErr;
+                return r;
         }
 
         strncpy(config->query, argv[1], sizeof(config->query));
@@ -54,10 +56,11 @@ ErrorCode Build(const int argc, char *argv[], Config *config) {
         config->query[sizeof(config->query) - 1] = '\0';
         config->filepath[sizeof(config->filepath) - 1] = '\0';
 
-        return Ok;
+        r.ok = 1;
+        return r;
 }
 
-char *readContent(const char *path) {
+static byte *readContent(byte *path) {
         FILE *file = fopen(path, "r");
         if (file == NULL) {
                 fprintf(stderr, "[%s] Error opening '%s' file: %s.\n", __func__, path, strerror(errno));
@@ -65,10 +68,10 @@ char *readContent(const char *path) {
         }
 
         fseek(file, 0, SEEK_END);
-        size_t file_size = ftell(file);
+        usize file_size = ftell(file);
         rewind(file);
 
-        char *content = (char *)malloc(file_size + 1);
+        byte *content = (byte *)malloc(file_size + 1);
 
         if (content == NULL) {
                 fclose(file);
@@ -76,7 +79,7 @@ char *readContent(const char *path) {
                 exit(EXIT_FAILURE);
         }
 
-        size_t bytes_read = fread(content, 1, file_size, file);
+        usize bytes_read = fread(content, 1, file_size, file);
         content[bytes_read] = '\0';
 
         if (bytes_read != file_size) {
@@ -89,28 +92,28 @@ char *readContent(const char *path) {
         return content;
 }
 
-void print_text(const char *query, char* line_ptr, size_t startPosition) {
-        for (size_t i = 0; i < startPosition; i++) {
+static void print_text(byte *query, byte* line_ptr, usize startPosition) {
+        for (usize i = 0; i < startPosition; i++) {
             printf("%c", line_ptr[i]);
         }
         printf("\033[1m\x1b[%dm", COLOR_YELLOW);
-        for (size_t i = 0; i < strlen(query); i++){
+        for (usize i = 0; i < strlen(query); i++){
             printf("%c", line_ptr[startPosition + i]);
         }
         printf("\x1b[0m\033[m");
 }
 
 
-void search(const char *query, char *content) {
-        char *line_ptr = strtok((char*)content, "\n");
-        for (int line_num = 1;line_ptr != NULL;
+static void search(byte *query, byte *content) {
+        byte *line_ptr = strtok((byte*)content, "\n");
+        for (i32 line_num = 1;line_ptr != NULL;
              line_num++, line_ptr = strtok(NULL,"\n")) {
              
-                char *sub_str_pointer = strstr(line_ptr, query);
+                byte *sub_str_pointer = strstr(line_ptr, query);
                 if (sub_str_pointer != NULL) {
                         printf("\x1b[%dm%d\x1b[0m: ", COLOR_GREEN, line_num);
                         while (sub_str_pointer != NULL) {
-                            size_t startPosition = sub_str_pointer - line_ptr;
+                            usize startPosition = sub_str_pointer - line_ptr;
                             
                             print_text(query, line_ptr, startPosition);
 
@@ -122,8 +125,8 @@ void search(const char *query, char *content) {
         }
 }
 
-void Run(const Config *config) {
-        char *content = readContent(config->filepath);
+static void Run(Config *config) {
+        byte *content = readContent(config->filepath);
         search(config->query, content);
         free(content);
 }

@@ -4,8 +4,8 @@
 
 int main(int argc, char **argv) {
         Config config;
-        ErrorCode result = Build(argc, argv, &config);
-        if (result == ParseErr) {
+        FileBuild result = Build(argc, argv, &config);
+        if (result.ok == 0) {
                 fprintf(stderr, "[%s] A parse error has ocurred.\n", __func__);
                 exit(EXIT_FAILURE);
         }
